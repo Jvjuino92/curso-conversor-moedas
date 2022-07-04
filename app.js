@@ -28,3 +28,65 @@
       - Para obter a key e fazer requests, você terá que fazer login e escolher
         o plano free. Seus dados de cartão de crédito não serão solicitados.
 */
+
+const currencyOneEl = document.querySelector('[data-js="currency-one"]')
+const currencyTwoEl = document.querySelector('[data-js="currency-two"]')
+const currenciesEl = document.querySelector('[data-js="currencies-container"]')
+
+const url = 'https://v6.exchangerate-api.com/v6/2025d3ee4740af3454af1d0d/latest/kk'
+
+const getErrorMessage = errorType => ({
+  'unsupported-code': 'This currency does not exists in our database!',
+  'malformed-request': 'Some parts of your request does not follow the structure required: https://www.exchangerate-api.com/docs/standard-requests',
+  'invalid-key': 'Your API key is not valid.',
+  'inactive-account': 'Your email address was not confirmed.',
+  'quota-reached': 'Your account has reached the the number of requests allowed by your plan.'
+})[errorType] || 'It was not possible to obtain the information required!'
+
+const fetchExchangeRate = async () => { 
+  try {
+    const response = await fetch(url)
+
+    if (!response.ok) {
+      throw new Error('Your conection has failed. It was not possible to get the information!')
+    }
+
+    const exchangeRateData = await response.json();
+
+    if (exchangeRateData.result === 'error') {
+      throw new Error (getErrorMessage(exchangeRateData['error-type']));
+    }
+  } catch (err) {
+    const div = document.createElement('div')
+    const button = document.createElement('button')
+
+    div.textContent = err.message;
+    div.classList.add('alert', 'alert-warning', 'alert-dismissible', 'fade', 'show');
+    div.setAttribute('role', 'alert')
+    button.classList.add('btn-close');
+    button.setAttribute('type', 'button')
+    button.setAttribute('Attribute', 'Close')
+
+    div.appendChild(button)
+    currenciesEl.insertAdjacentElement('afterend', div)
+
+
+    /*
+      <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        Error Message
+        <button type="button" class="btn-close"  aria-label="Close"></button>
+      </div>
+    */
+  }
+}
+
+fetchExchangeRate();
+
+const option = `<option>Oi</option>`
+
+currencyOneEl.innerHTML = option
+currencyTwoEl.innerHTML = option
+
+console.log(currencyOneEl, currencyTwoEl);
+
+// 30:28
