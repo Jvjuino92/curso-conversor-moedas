@@ -4,10 +4,10 @@
   - Você poderá modificar a marcação e estilos da aplicação depois. No momento, 
     concentre-se em executar o que descreverei abaixo;
     - Quando a página for carregada: 
-      - Popule os <select> com tags <option> que contém as moedas que podem ser
+      - Popule os <select> com tags <getOptions> que contém as moedas que podem ser
         convertidas. "BRL" para real brasileiro, "EUR" para euro, "USD" para 
         dollar dos Estados Unidos, etc.
-      - O option selecionado por padrão no 1º <select> deve ser "USD" e o option
+      - O getOptions selecionado por padrão no 1º <select> deve ser "USD" e o getOptions
         no 2º <select> deve ser "BRL";
       - O parágrafo com data-js="converted-value" deve exibir o resultado da 
         conversão de 1 USD para 1 BRL;
@@ -32,8 +32,11 @@
 const currencyOneEl = document.querySelector('[data-js="currency-one"]')
 const currencyTwoEl = document.querySelector('[data-js="currency-two"]')
 const currenciesEl = document.querySelector('[data-js="currencies-container"]')
+const convertedValueEl = document.querySelector('[data-js="converted-value"]')
+const valuePrecisionEl = document.querySelector('[data-js="conversion-precision"]')
+const timesCurrencyEl = document.querySelector('[data-js="currency-one-times"]')
 
-const url = 'https://v6.exchangerate-api.com/v6/2025d3ee4740af3454af1d0d/latest/kk'
+const url = 'https://v6.exchangerate-api.com/v6/2025d3ee4740af3454af1d0d/latest/USD'
 
 const getErrorMessage = errorType => ({
   'unsupported-code': 'This currency does not exists in our database!',
@@ -56,6 +59,8 @@ const fetchExchangeRate = async () => {
     if (exchangeRateData.result === 'error') {
       throw new Error (getErrorMessage(exchangeRateData['error-type']));
     }
+
+    return exchangeRateData
   } catch (err) {
     const div = document.createElement('div')
     const button = document.createElement('button')
@@ -65,28 +70,38 @@ const fetchExchangeRate = async () => {
     div.setAttribute('role', 'alert')
     button.classList.add('btn-close');
     button.setAttribute('type', 'button')
-    button.setAttribute('Attribute', 'Close')
+    button.setAttribute('aria-label', 'Close')
+
+    button.addEventListener('click', () => {
+      div.remove()
+    })
 
     div.appendChild(button)
     currenciesEl.insertAdjacentElement('afterend', div)
 
-
-    /*
-      <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        Error Message
-        <button type="button" class="btn-close"  aria-label="Close"></button>
-      </div>
-    */
   }
 }
 
-fetchExchangeRate();
+const init = async () => {
+  const exchangeRateData = await fetchExchangeRate()
 
-const option = `<option>Oi</option>`
+  
+  const getOptions = selectedCurrency => Object.keys(exchangeRateData.conversion_rates)
+  .map(currency => `<option ${currency === selectedCurrency ? 'selected' : ''}>${currency}</option>`)
+  .join('')
 
-currencyOneEl.innerHTML = option
-currencyTwoEl.innerHTML = option
+  currencyOneEl.innerHTML = getOptions('USD')
+  currencyTwoEl.innerHTML = getOptions('BRL')
 
-console.log(currencyOneEl, currencyTwoEl);
+  convertedValueEl.textContent = exchangeRateData.conversion_rates.BRL.toFixed(2)
+  valuePrecisionEl.textContent = `1 USD = ${exchangeRateData.conversion_rates.BRL} BRL`
+}
 
-// 30:28
+timesCurrencyEl.addEventListener('input', e => {
+  convertedValueEl.textContent = e.target.value * 3
+})
+
+init()
+
+
+// 10:00
